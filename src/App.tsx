@@ -8,10 +8,11 @@ import Login from './pages/Login';
 function AppContent() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+  const isSimulationPage = location.pathname === '/simulation';
 
   return (
     <>
-      {!isLoginPage && <Navbar />}
+      {!isLoginPage && !isSimulationPage && <Navbar />}
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<RoleSelection />} />

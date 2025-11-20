@@ -2,24 +2,64 @@ import type { Message, Evaluation, ContextInfo } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
+// Get auth token from localStorage or cookie
+function getAuthToken(): string | null {
+  return localStorage.getItem('authToken');
+}
+
+// Helper function to make authenticated API calls
+async function apiCall(endpoint: string, options: RequestInit = {}) {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(options.headers as Record<string, string>),
+  };
+  
+  // Remove undefined values
+  Object.keys(headers).forEach(key => {
+    if (headers[key] === undefined) {
+      delete headers[key];
+    }
+  });
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Request failed' }));
+    throw new Error(error.message || 'Request failed');
+  }
+
+  return response.json();
+}
+
 export async function startSimulation(role: string): Promise<{
+  sessionId: string;
   context: ContextInfo;
   initialMessage: Message;
   tasks: any[];
 }> {
-  const response = await fetch(`${API_BASE_URL}/simulation/start`, {
+  const data = await apiCall('/simulation/start', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({ role }),
   });
-  
-  if (!response.ok) {
-    throw new Error('Failed to start simulation');
-  }
-  
-  return response.json();
+
+  // Transform backend response to match frontend format
+  return {
+    sessionId: data.sessionId,
+    context: data.context,
+    initialMessage: {
+      id: data.initialMessage.id,
+      type: 'ai' as const,
+      content: data.initialMessage.content,
+      timestamp: new Date(data.initialMessage.timestamp),
+      sender: data.initialMessage.sender,
+    },
+    tasks: data.tasks || [],
+  };
 }
 
 export async function sendMessage(
