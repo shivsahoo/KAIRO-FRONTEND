@@ -4,17 +4,30 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
+import { login } from "../utils/api";
 
 export default function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For demo purposes, just navigate to role selection
-    navigate('/');
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      await login(email, password);
+      // Navigate to role selection on successful login
+      navigate('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -89,6 +102,13 @@ export default function Login() {
               </div>
               
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Error message */}
+                {error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                    {error}
+                  </div>
+                )}
+
                 {/* Email field */}
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-[#2d3748]">Email</Label>
@@ -100,6 +120,7 @@ export default function Login() {
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-white border-gray-200 text-[#2d3748] placeholder:text-gray-400 h-11"
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 
@@ -115,6 +136,7 @@ export default function Login() {
                       onChange={(e) => setPassword(e.target.value)}
                       className="bg-white border-gray-200 text-[#2d3748] placeholder:text-gray-400 h-11 pr-10"
                       required
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
@@ -138,9 +160,10 @@ export default function Login() {
                 {/* Sign in button */}
                 <Button 
                   type="submit" 
-                  className="w-full bg-[#3e67a8] hover:bg-[#355892] text-white border-0 h-11 rounded-xl shadow-md"
+                  className="w-full bg-[#3e67a8] hover:bg-[#355892] text-white border-0 h-11 rounded-xl shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading}
                 >
-                  Sign in
+                  {isLoading ? 'Signing in...' : 'Sign in'}
                 </Button>
               </form>
               

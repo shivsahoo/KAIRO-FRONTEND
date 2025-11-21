@@ -434,8 +434,8 @@ export default function ChatPanel() {
       <div className="px-6 py-4 border-b border-[#E5E5E5] bg-white">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-[15px] font-semibold text-[#0D0D0D]">Simulation Chat</h2>
-            <p className="text-[11px] text-[#787878] mt-0.5">Interact with your AI colleagues</p>
+            <h2 className="text-[17px] font-semibold text-[#0D0D0D]">Simulation Chat</h2>
+            <p className="text-[13px] text-[#787878] mt-0.5">Interact with your AI colleagues</p>
           </div>
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />

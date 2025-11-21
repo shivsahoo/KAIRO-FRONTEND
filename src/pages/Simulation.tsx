@@ -128,7 +128,7 @@ export default function Simulation() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1 }}
-          className="w-80 border-r border-[#E5E5E5] bg-white overflow-hidden flex-shrink-0"
+          className="w-96 border-r border-[#E5E5E5] bg-white overflow-hidden flex-shrink-0"
         >
           <ContextPanel />
         </motion.div>
@@ -148,7 +148,7 @@ export default function Simulation() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
-          className="w-80 border-l border-[#E5E5E5] bg-white overflow-hidden flex-shrink-0"
+          className="w-96 border-l border-[#E5E5E5] bg-white overflow-hidden flex-shrink-0"
         >
           <TasksSidebar />
         </motion.div>

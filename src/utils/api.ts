@@ -7,6 +7,16 @@ function getAuthToken(): string | null {
   return localStorage.getItem('authToken');
 }
 
+// Set auth token in localStorage
+export function setAuthToken(token: string): void {
+  localStorage.setItem('authToken', token);
+}
+
+// Remove auth token from localStorage
+export function removeAuthToken(): void {
+  localStorage.removeItem('authToken');
+}
+
 // Helper function to make authenticated API calls
 async function apiCall(endpoint: string, options: RequestInit = {}) {
   const token = getAuthToken();
@@ -34,6 +44,89 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
   }
 
   return response.json();
+}
+
+/**
+ * Login user
+ */
+export async function login(email: string, password: string): Promise<{
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    roleSelected?: string;
+  };
+}> {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Login failed' }));
+    throw new Error(error.message || 'Login failed');
+  }
+
+  const data = await response.json();
+  
+  // Store token in localStorage
+  if (data.token) {
+    setAuthToken(data.token);
+  }
+
+  return data;
+}
+
+/**
+ * Signup user
+ */
+export async function signup(email: string, password: string, name: string): Promise<{
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    roleSelected?: string;
+  };
+}> {
+  const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password, name }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Signup failed' }));
+    throw new Error(error.message || 'Signup failed');
+  }
+
+  const data = await response.json();
+  
+  // Store token in localStorage
+  if (data.token) {
+    setAuthToken(data.token);
+  }
+
+  return data;
+}
+
+/**
+ * Get current user
+ */
+export async function getCurrentUser(): Promise<{
+  id: string;
+  email: string;
+  name: string;
+  roleSelected?: string;
+  authProvider?: string;
+}> {
+  return apiCall('/auth/me');
 }
 
 export async function startSimulation(role: string): Promise<{
