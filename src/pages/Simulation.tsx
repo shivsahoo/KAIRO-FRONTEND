@@ -16,6 +16,7 @@ export default function Simulation() {
   const startSimulation = useSimulationStore((state) => state.startSimulation);
   const endSimulation = useSimulationStore((state) => state.endSimulation);
   const setEvaluation = useSimulationStore((state) => state.setEvaluation);
+  const reset = useSimulationStore((state) => state.reset);
   const [isInitializing, setIsInitializing] = useState(true);
   const hasInitialized = useRef<string | null>(null);
 
@@ -45,8 +46,34 @@ export default function Simulation() {
           throw apiError;
         }
         
+        // Reset store before loading session data (prevents duplicates)
+        // Preserve role since it's needed for the session
+        const currentRole = role;
+        reset();
+        // Restore role after reset
+        if (currentRole) {
+          useSimulationStore.getState().setRole(currentRole);
+        }
         setContext(data.context);
-        addMessage(data.initialMessage);
+        
+        // If resuming, load all messages from previous session
+        if (data.isResuming && data.messages && data.messages.length > 0) {
+          console.log(`📋 Resuming session with ${data.messages.length} messages`);
+          // Load all messages from previous session
+          data.messages.forEach((message) => addMessage(message));
+        } else {
+          // New session - add welcome message first (if present), then initial message (if present)
+          console.log(data.welcomeMessage ? '👋 First-time user - showing welcome message' : '🆕 Returning user - showing initial message');
+          if (data.welcomeMessage) {
+            addMessage(data.welcomeMessage);
+          }
+          // Only add initial message if it exists (returning users will have it, first-time users won't)
+          if (data.initialMessage) {
+            addMessage(data.initialMessage);
+          }
+        }
+        
+        // Clear existing tasks and load tasks from session
         data.tasks.forEach((task) => addTask(task));
         
         // Store session ID for WebSocket connection

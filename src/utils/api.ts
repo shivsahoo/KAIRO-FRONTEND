@@ -103,6 +103,13 @@ export async function signup(email: string, password: string, name: string): Pro
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Signup failed' }));
+    
+    // Handle validation errors array format
+    if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {
+      const validationMessages = error.errors.map((err: any) => err.msg || err.message).join(', ');
+      throw new Error(validationMessages);
+    }
+    
     throw new Error(error.message || 'Signup failed');
   }
 
@@ -132,8 +139,12 @@ export async function getCurrentUser(): Promise<{
 export async function startSimulation(role: string): Promise<{
   sessionId: string;
   context: ContextInfo;
-  initialMessage: Message;
+  welcomeMessage?: Message;
+  initialMessage?: Message; // Optional - only for returning users
+  messages?: Message[]; // All messages when resuming
   tasks: any[];
+  isResuming?: boolean;
+  isFirstTime?: boolean;
 }> {
   const data = await apiCall('/simulation/start', {
     method: 'POST',
@@ -141,18 +152,63 @@ export async function startSimulation(role: string): Promise<{
   });
 
   // Transform backend response to match frontend format
-  return {
+  const response: {
+    sessionId: string;
+    context: ContextInfo;
+    welcomeMessage?: Message;
+    initialMessage?: Message;
+    messages?: Message[];
+    tasks: any[];
+    isResuming?: boolean;
+    isFirstTime?: boolean;
+  } = {
     sessionId: data.sessionId,
     context: data.context,
-    initialMessage: {
+    tasks: data.tasks || [],
+  };
+
+  // Include welcomeMessage if present (for first-time users)
+  if (data.welcomeMessage) {
+    response.welcomeMessage = {
+      id: data.welcomeMessage.id,
+      type: 'ai' as const,
+      content: data.welcomeMessage.content,
+      timestamp: new Date(data.welcomeMessage.timestamp),
+      sender: data.welcomeMessage.sender,
+    };
+  }
+
+  // Include initialMessage if present (for returning users)
+  if (data.initialMessage) {
+    response.initialMessage = {
       id: data.initialMessage.id,
       type: 'ai' as const,
       content: data.initialMessage.content,
       timestamp: new Date(data.initialMessage.timestamp),
       sender: data.initialMessage.sender,
-    },
-    tasks: data.tasks || [],
-  };
+    };
+  }
+
+  // If resuming, include all messages
+  if (data.isResuming && data.messages && Array.isArray(data.messages)) {
+    response.messages = data.messages.map((msg: any) => ({
+      id: msg.id,
+      type: msg.type as 'user' | 'ai',
+      content: msg.content,
+      timestamp: new Date(msg.timestamp),
+      sender: msg.sender,
+    }));
+  }
+
+  // Include flags
+  if (data.isResuming !== undefined) {
+    response.isResuming = data.isResuming;
+  }
+  if (data.isFirstTime !== undefined) {
+    response.isFirstTime = data.isFirstTime;
+  }
+
+  return response;
 }
 
 export async function sendMessage(

@@ -22,6 +22,10 @@ export default function ChatPanel() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketInitialized = useRef<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  const lastErrorTimeRef = useRef<number>(0);
+  const errorMessageIdRef = useRef<string | null>(null);
+  const transportErrorCountRef = useRef<number>(0);
+  const connectionErrorCountRef = useRef<number>(0);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -106,13 +110,25 @@ export default function ChatPanel() {
       console.log('✅ Socket.io connected');
     });
     
+    // Handle transport errors (less verbose - only log if connection fails after retries)
     newSocket.io.on('error', (error) => {
-      console.error('❌ Socket.io transport error:', error);
+      transportErrorCountRef.current++;
+      // Only log transport errors if we've had multiple failures and not connected
+      if (transportErrorCountRef.current > 3 && !newSocket.connected) {
+        console.warn('⚠️ Socket.io transport error (attempting fallback):', error.message || error);
+      }
     });
 
     newSocket.on('connect', () => {
       console.log('✅ Connected to WebSocket');
       setIsConnected(true);
+      // Reset error counters on successful connection
+      transportErrorCountRef.current = 0;
+      connectionErrorCountRef.current = 0;
+      // Clear error message ID when connection succeeds
+      errorMessageIdRef.current = null;
+      lastErrorTimeRef.current = 0;
+      
       const sessionToJoin = storedSessionId || sessionId;
       if (sessionToJoin) {
         newSocket.emit('join_simulation', sessionToJoin);
@@ -152,21 +168,79 @@ export default function ChatPanel() {
     newSocket.on('reconnect_failed', () => {
       console.error('❌ Reconnection failed after all attempts');
       setIsConnected(false);
-      addMessage({
-        type: 'system',
-        content: 'Failed to reconnect to server. Please refresh the page.',
-      });
+      // Only show error if we haven't shown one recently (within last 5 seconds)
+      const now = Date.now();
+      if (now - lastErrorTimeRef.current > 5000) {
+        lastErrorTimeRef.current = now;
+        const errorMsg = {
+          type: 'system' as const,
+          content: 'Failed to reconnect to server. Please refresh the page.',
+        };
+        // Update existing error message or add new one
+        if (errorMessageIdRef.current) {
+          updateMessage(errorMessageIdRef.current, errorMsg);
+        } else {
+          addMessage(errorMsg);
+          // Store the message ID (we'll need to get it from the store)
+          setTimeout(() => {
+            const messages = useSimulationStore.getState().messages;
+            const lastMsg = messages[messages.length - 1];
+            if (lastMsg && lastMsg.type === 'system') {
+              errorMessageIdRef.current = lastMsg.id;
+            }
+          }, 100);
+        }
+      }
     });
 
-    // Handle connection errors
+    // Handle connection errors (only log/show if persistent)
     newSocket.on('connect_error', (error: any) => {
-      console.error('WebSocket connection error:', error);
+      connectionErrorCountRef.current++;
       setIsConnected(false);
       setIsLoading(false);
-      addMessage({
-        type: 'system',
-        content: `Connection error: ${error.message || 'Unable to connect to server'}. Please check if the backend is running.`,
-      });
+      
+      // Only log/show error if we've had multiple failures (not just initial attempts)
+      // Socket.io will try websocket first, then fallback to polling - errors during this are normal
+      if (connectionErrorCountRef.current > 2) {
+        // Only log to console if it's a persistent issue
+        if (connectionErrorCountRef.current === 3) {
+          console.warn('⚠️ Connection errors detected, attempting fallback transports...');
+        }
+        
+        // Only show error to user if we haven't shown one recently (within last 10 seconds)
+        const now = Date.now();
+        if (now - lastErrorTimeRef.current > 10000) {
+          lastErrorTimeRef.current = now;
+          const errorContent = `Connection issue: ${error.message || 'Unable to connect to server'}. Trying to reconnect...`;
+          
+          // Check if we already have this error message
+          const currentMessages = useSimulationStore.getState().messages;
+          const existingError = currentMessages.find(
+            msg => msg.type === 'system' && msg.content.includes('Connection')
+          );
+          
+          if (!existingError) {
+            addMessage({
+              type: 'system',
+              content: errorContent,
+            });
+            // Store the message ID
+            setTimeout(() => {
+              const messages = useSimulationStore.getState().messages;
+              const lastMsg = messages[messages.length - 1];
+              if (lastMsg && lastMsg.type === 'system') {
+                errorMessageIdRef.current = lastMsg.id;
+              }
+            }, 100);
+          } else {
+            // Update existing error message
+            errorMessageIdRef.current = existingError.id;
+            updateMessage(existingError.id, {
+              content: errorContent,
+            });
+          }
+        }
+      }
     });
 
     // Handle streaming message start
@@ -269,11 +343,25 @@ export default function ChatPanel() {
     newSocket.on('error', (error: any) => {
       console.error('WebSocket error:', error);
       setIsLoading(false);
-      if (error.message) {
-        addMessage({
-          type: 'system',
-          content: `Error: ${error.message}`,
-        });
+      
+      // Only show error if we haven't shown one recently (within last 5 seconds)
+      const now = Date.now();
+      if (now - lastErrorTimeRef.current > 5000 && error.message) {
+        lastErrorTimeRef.current = now;
+        const errorContent = `Error: ${error.message}`;
+        
+        // Check if we already have this error message
+        const currentMessages = useSimulationStore.getState().messages;
+        const existingError = currentMessages.find(
+          msg => msg.type === 'system' && msg.content === errorContent
+        );
+        
+        if (!existingError) {
+          addMessage({
+            type: 'system',
+            content: errorContent,
+          });
+        }
       }
     });
 
