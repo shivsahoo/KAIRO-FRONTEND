@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Clock, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useSimulationStore } from '../../store/simulationStore';
 import type { Task } from '../../types';
 
@@ -10,11 +11,16 @@ const statusIcons = {
 };
 
 export default function TasksSidebar() {
+  const navigate = useNavigate();
   const tasks = useSimulationStore((state) => state.tasks);
   const updateTask = useSimulationStore((state) => state.updateTask);
 
   const handleStatusChange = (taskId: string, newStatus: Task['status']) => {
     updateTask(taskId, { status: newStatus });
+  };
+
+  const handleTaskClick = (taskId: string) => {
+    navigate(`/task/${taskId}`);
   };
 
   return (
@@ -39,7 +45,8 @@ export default function TasksSidebar() {
                 key={task.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-[#FAFAFA] rounded-[8px] p-4 border border-[#E5E5E5] hover:border-[#6366F1]/30 transition-all"
+                onClick={() => handleTaskClick(task.id)}
+                className="bg-[#FAFAFA] rounded-[8px] p-4 border border-[#E5E5E5] hover:border-[#6366F1]/30 transition-all cursor-pointer"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-start gap-2 flex-1">

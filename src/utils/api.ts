@@ -332,3 +332,228 @@ export const mockEvaluatePerformance = async () => {
   };
 };
 
+/**
+ * Upload file
+ */
+export async function uploadFile(file: File): Promise<{
+  url: string;
+  filename: string;
+  size: number;
+  mimetype: string;
+}> {
+  const token = getAuthToken();
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/upload/file`, {
+    method: 'POST',
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+    throw new Error(error.message || 'Upload failed');
+  }
+
+  const data = await response.json();
+  
+  // If URL is relative (starts with /uploads/), prepend backend base URL
+  const backendBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:3000';
+  const fullUrl = data.url.startsWith('http') ? data.url : `${backendBaseUrl}${data.url}`;
+  
+  return {
+    ...data,
+    url: fullUrl,
+  };
+}
+
+/**
+ * Submit task
+ */
+export async function submitTask(data: {
+  text?: string;
+  files?: string[];
+  audioUrl?: string;
+  selectedResumes?: string[];
+  resumeRatings?: any[];
+}): Promise<{
+  submission: {
+    id: string;
+    taskId: string;
+    score: number | null;
+    feedback: string | null;
+    improvements: string | null;
+  };
+  canProceed: boolean;
+  message: string;
+  nextTask: any | null;
+  nextTaskMessage: any | null;
+  completed: boolean;
+  scoreInfo: {
+    min: number;
+    max: number;
+    passingScore: number;
+    currentScore: number;
+  };
+}> {
+  return apiCall('/tasks/submit', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Get current task details
+ */
+export async function getCurrentTask(): Promise<{
+  tasks: any[];
+  currentTask: any | null;
+  taskIndex: number;
+  allTasksCompleted: boolean;
+  jobDescription?: any;
+  resumes?: any[];
+  candidates?: any[];
+}> {
+  return apiCall('/tasks/current');
+}
+
+/**
+ * Get candidates for interview scheduling (hr_t3)
+ */
+export async function getCandidates(): Promise<{
+  candidates: any[];
+  count: number;
+}> {
+  return apiCall('/interview/candidates');
+}
+
+/**
+ * Get available time slots for scheduling
+ */
+export async function getAvailableTimeSlots(date?: string): Promise<{
+  slots: Array<{
+    startTime: string;
+    endTime: string;
+    date: string;
+    time: string;
+    available: boolean;
+  }>;
+  count: number;
+}> {
+  const params = date ? `?date=${date}` : '';
+  return apiCall(`/interview/time-slots${params}`);
+}
+
+/**
+ * Create interview schedule
+ */
+export async function scheduleInterview(data: {
+  candidateId: string;
+  resumeId?: string;
+  startTime: string;
+  endTime: string;
+  title?: string;
+  description?: string;
+  interviewType: 'video' | 'in-person' | 'phone';
+  location?: string;
+  meetingLink: string; // REQUIRED
+}): Promise<{
+  interview: {
+    id: string;
+    candidateId: string;
+    candidateName: string;
+    candidateEmail: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    duration: number;
+    interviewType: string;
+    location?: string;
+    meetingLink: string;
+    status: string;
+  };
+  message: string;
+}> {
+  return apiCall('/interview/schedule', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Send interview email to candidate and interviewer
+ */
+export async function sendInterviewEmail(data: {
+  interviewId: string;
+  meetingLink: string; // REQUIRED
+  resumeId: string; // REQUIRED for evaluation
+  candidateEmail: string; // REQUIRED
+  interviewerEmail: string | { name: string; email: string }; // REQUIRED
+  subject?: string;
+  body?: string;
+  attachResume?: boolean;
+}): Promise<{
+  emails: Array<{
+    id: string;
+    type: 'candidate' | 'interviewer';
+    subject: string;
+    body: string;
+    to: Array<{ name: string; email: string }>;
+    sentAt: string;
+    attachments: any[];
+    meetingLink: string;
+  }>;
+  interview: {
+    id: string;
+    emailSent: boolean;
+    meetingLink: string;
+  };
+  message: string;
+}> {
+  return apiCall('/interview/send-email', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Get all scheduled interviews
+ */
+export async function getInterviews(): Promise<{
+  interviews: Array<{
+    id: string;
+    candidateId: string;
+    candidateName: string;
+    candidateEmail: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    duration: number;
+    interviewType: string;
+    location?: string;
+    meetingLink: string;
+    status: string;
+    emailSent: boolean;
+  }>;
+  count: number;
+}> {
+  return apiCall('/interview/interviews');
+}
+
+/**
+ * Get inbox emails
+ */
+export async function getInbox(folder: string = 'inbox', taskId?: string): Promise<{
+  emails: any[];
+  count: number;
+}> {
+  const params = new URLSearchParams();
+  if (folder) params.append('folder', folder);
+  if (taskId) params.append('taskId', taskId);
+  const query = params.toString() ? `?${params.toString()}` : '';
+  return apiCall(`/interview/inbox${query}`);
+}
+

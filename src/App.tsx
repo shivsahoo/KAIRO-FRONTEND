@@ -5,6 +5,7 @@ import Simulation from './pages/Simulation';
 import PerformanceReport from './pages/PerformanceReport';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import TaskDetail from './pages/TaskDetail';
 
 function AppContent() {
   const location = useLocation();
@@ -20,6 +21,7 @@ function AppContent() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/" element={<RoleSelection />} />
         <Route path="/simulation" element={<Simulation />} />
+        <Route path="/task/:taskId" element={<TaskDetail />} />
         <Route path="/report" element={<PerformanceReport />} />
       </Routes>
     </>

@@ -33,7 +33,7 @@ export default function ContextPanel() {
 
         {/* Current Scenario */}
         <div>
-          <h3 className="text-[14px] font-semibold text-[#6366F1] uppercase tracking-wide mb-2">Current Scenario</h3>
+          <h3 className="text-[14px] font-semibold text-[#6366F1] uppercase tracking-wide mb-2">Current Task</h3>
           <div className="bg-[#F5F5F5] rounded-[8px] p-4 border border-[#E5E5E5]">
             <p className="text-[16px] text-[#0D0D0D] leading-relaxed">{context.currentScenario}</p>
           </div>

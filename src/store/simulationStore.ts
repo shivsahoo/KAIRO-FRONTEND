@@ -6,7 +6,7 @@ interface SimulationStore extends SimulationState {
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
   updateMessage: (messageId: string, updates: Partial<Message>) => void;
   appendToLastMessage: (content: string) => void;
-  addTask: (task: Omit<Task, 'id'>) => void;
+  addTask: (task: Task | Omit<Task, 'id'>) => void;
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   setContext: (context: ContextInfo) => void;
   setEvaluation: (evaluation: Evaluation) => void;
@@ -62,7 +62,7 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
       ...state.tasks,
       {
         ...task,
-        id: `task-${Date.now()}-${Math.random()}`,
+        id: ('id' in task && task.id) ? task.id : `task-${Date.now()}-${Math.random()}`,
       },
     ],
   })),

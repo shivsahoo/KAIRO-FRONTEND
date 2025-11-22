@@ -15,7 +15,13 @@ export interface Task {
   title: string;
   description: string;
   status: 'pending' | 'in-progress' | 'completed';
-  priority: 'low' | 'medium' | 'high';
+  priority?: 'low' | 'medium' | 'high';
+  level?: string;
+  expectedOutput?: string;
+  score?: number | null;
+  feedback?: string | null;
+  improvements?: string | null;
+  submittedAt?: Date | null;
 }
 
 export interface ContextInfo {
