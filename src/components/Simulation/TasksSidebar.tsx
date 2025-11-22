@@ -1,8 +1,11 @@
 import { motion } from 'framer-motion';
-import { Clock, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Clock, RefreshCw, CheckCircle2, Calendar, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useSimulationStore } from '../../store/simulationStore';
 import type { Task } from '../../types';
+import CalendarModal from './CalendarModal';
+import EmailModal from './EmailModal';
 
 const statusIcons = {
   pending: Clock,
@@ -22,6 +25,9 @@ export default function TasksSidebar() {
   const handleTaskClick = (taskId: string) => {
     navigate(`/task/${taskId}`);
   };
+
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   return (
     <div className="h-full flex flex-col bg-white">
@@ -70,7 +76,10 @@ export default function TasksSidebar() {
                   {(['pending', 'in-progress', 'completed'] as const).map((status) => (
                     <button
                       key={status}
-                      onClick={() => handleStatusChange(task.id, status)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStatusChange(task.id, status);
+                      }}
                       className={`
                         text-[13px] px-3 py-1.5 rounded-[6px] font-medium
                         transition-all
@@ -90,6 +99,44 @@ export default function TasksSidebar() {
           })
         )}
       </div>
+
+      {/* Global Calendar and Email Actions at Bottom */}
+      <div className="px-6 py-4 border-t border-[#E5E5E5] bg-white">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCalendarModal(true)}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-[#E5E5E5] rounded-[6px] text-[14px] font-medium text-[#6366F1] hover:bg-[#EEF2FF] hover:border-[#6366F1] transition-colors"
+            title="Schedule Meeting"
+          >
+            <Calendar className="w-5 h-5" />
+            <span>Calendar</span>
+          </button>
+          <button
+            onClick={() => setShowEmailModal(true)}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-[#E5E5E5] rounded-[6px] text-[14px] font-medium text-[#6366F1] hover:bg-[#EEF2FF] hover:border-[#6366F1] transition-colors"
+            title="Send Email"
+          >
+            <Mail className="w-5 h-5" />
+            <span>Email</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Calendar Modal */}
+      {showCalendarModal && (
+        <CalendarModal
+          isOpen={showCalendarModal}
+          onClose={() => setShowCalendarModal(false)}
+        />
+      )}
+
+      {/* Email Modal */}
+      {showEmailModal && (
+        <EmailModal
+          isOpen={showEmailModal}
+          onClose={() => setShowEmailModal(false)}
+        />
+      )}
     </div>
   );
 }

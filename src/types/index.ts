@@ -20,7 +20,7 @@ export interface Task {
   expectedOutput?: string;
   score?: number | null;
   feedback?: string | null;
-  improvements?: string | null;
+  improvements?: string | string[] | null;
   submittedAt?: Date | null;
 }
 

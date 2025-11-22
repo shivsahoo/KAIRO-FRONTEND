@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSimulationStore } from '../store/simulationStore';
-import { startSimulation as apiStartSimulation, mockEvaluatePerformance } from '../utils/api';
+import { startSimulation as apiStartSimulation } from '../utils/api';
 import ChatPanel from '../components/Simulation/ChatPanel';
 import TasksSidebar from '../components/Simulation/TasksSidebar';
 import ContextPanel from '../components/Simulation/ContextPanel';
@@ -14,8 +14,6 @@ export default function Simulation() {
   const addMessage = useSimulationStore((state) => state.addMessage);
   const addTask = useSimulationStore((state) => state.addTask);
   const startSimulation = useSimulationStore((state) => state.startSimulation);
-  const endSimulation = useSimulationStore((state) => state.endSimulation);
-  const setEvaluation = useSimulationStore((state) => state.setEvaluation);
   const reset = useSimulationStore((state) => state.reset);
   const [isInitializing, setIsInitializing] = useState(true);
   const hasInitialized = useRef<string | null>(null);
@@ -93,16 +91,6 @@ export default function Simulation() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role, navigate]);
 
-  const handleEndSimulation = async () => {
-    try {
-      const evaluation = await mockEvaluatePerformance();
-      setEvaluation(evaluation);
-      endSimulation();
-      navigate('/report');
-    } catch (error) {
-      console.error('Failed to evaluate performance:', error);
-    }
-  };
 
   if (isInitializing) {
     return (
@@ -135,16 +123,6 @@ export default function Simulation() {
             <h1 className="text-[15px] font-semibold text-[#0D0D0D] leading-none">Kairo Simulation</h1>
             <p className="text-[11px] text-[#787878] mt-0.5">{role}</p>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleEndSimulation}
-            className="px-3 py-1.5 text-[13px] font-medium text-[#DC2626] hover:bg-[#FEE2E2] rounded-[6px] transition-colors"
-          >
-            End Simulation
-          </motion.button>
         </div>
       </div>
 

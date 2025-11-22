@@ -359,15 +359,15 @@ HR Manager`;
         return;
       }
     } else if (isInterviewScheduling) {
-      // Validate interview scheduling submission
-      if (scheduledInterviews.length < 3) {
-        setError('Please schedule at least 3 interviews');
+      // Validate interview scheduling submission - at least 1 interview with email sent
+      if (scheduledInterviews.length < 1) {
+        setError('Please schedule at least 1 interview using the Calendar button');
         return;
       }
       
-      const interviewsWithoutEmails = scheduledInterviews.filter(i => !i.emailSent);
-      if (interviewsWithoutEmails.length > 0) {
-        setError(`Please send emails for all scheduled interviews. ${interviewsWithoutEmails.length} interview(s) still need emails.`);
+      const interviewsWithEmails = scheduledInterviews.filter(i => i.emailSent);
+      if (interviewsWithEmails.length < 1) {
+        setError('Please send at least 1 email using the Email button for a scheduled interview');
         return;
       }
     } else {
@@ -689,232 +689,50 @@ HR Manager`;
               </motion.div>
             )}
 
-            {/* Interview Scheduling UI (for hr_t3) */}
+            {/* Interview Scheduling UI (for hr_t3) - Simplified */}
             {isInterviewScheduling && (
-              <>
-                {/* Candidates List */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="bg-white rounded-[8px] p-6 border border-[#E5E5E5] mb-6"
-                >
-                  <h3 className="text-[17px] font-semibold text-[#0D0D0D] mb-4">Available Candidates</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {candidates.map((candidate) => (
-                      <div
-                        key={candidate.id}
-                        className="p-4 border border-[#E5E5E5] rounded-[6px] hover:border-[#6366F1] transition-colors"
-                      >
-                        <div className="flex items-start gap-2 mb-2">
-                          <User className="w-5 h-5 text-[#6366F1] flex-shrink-0 mt-0.5" />
-                          <div className="flex-1">
-                            <h4 className="text-[15px] font-semibold text-[#0D0D0D]">{candidate.candidateName}</h4>
-                            <p className="text-[13px] text-[#787878]">{candidate.email}</p>
-                          </div>
-                        </div>
-                        {candidate.experience !== undefined && (
-                          <p className="text-[13px] text-[#787878] mb-2">
-                            {candidate.experience} years experience
-                          </p>
-                        )}
-                        {candidate.skills && candidate.skills.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {candidate.skills.slice(0, 4).map((skill: string, idx: number) => (
-                              <span
-                                key={idx}
-                                className="text-[11px] px-2 py-0.5 bg-[#F3F4F6] text-[#0D0D0D] rounded"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-[8px] p-6 border border-[#E5E5E5] mb-6"
+              >
+                <div className="text-center py-8">
+                  <Calendar className="w-16 h-16 text-[#6366F1] mx-auto mb-4" />
+                  <h3 className="text-[18px] font-semibold text-[#0D0D0D] mb-2">
+                    Schedule Interviews & Send Emails
+                  </h3>
+                  <p className="text-[14px] text-[#787878] mb-6 max-w-md mx-auto">
+                    Use the Calendar and Email buttons at the bottom of the Tasks sidebar to schedule meetings and send emails.
+                    Once you've scheduled at least 1 interview and sent the corresponding email, you can complete this task.
+                  </p>
+
+                  {/* Status Summary */}
+                  <div className="bg-[#FAFAFA] rounded-[8px] p-4 mb-6 max-w-md mx-auto">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[14px] text-[#0D0D0D]">Scheduled Interviews:</span>
+                        <span className={`text-[14px] font-semibold ${
+                          scheduledInterviews.length > 0 ? 'text-[#059669]' : 'text-[#787878]'
+                        }`}>
+                          {scheduledInterviews.length}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Schedule Interview Form */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-white rounded-[8px] p-6 border border-[#E5E5E5] mb-6"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[17px] font-semibold text-[#0D0D0D]">Schedule Interview</h3>
-                    <button
-                      onClick={() => setShowScheduleForm(!showScheduleForm)}
-                      className="px-4 py-2 bg-[#6366F1] text-white rounded-[6px] text-[14px] font-medium hover:bg-[#4F46E5] transition-colors flex items-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      {showScheduleForm ? 'Cancel' : 'New Interview'}
-                    </button>
-                  </div>
-
-                  {showScheduleForm && (
-                    <div className="space-y-4 p-4 bg-[#FAFAFA] rounded-[6px]">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-[14px] font-medium text-[#0D0D0D] mb-2">
-                            Candidate <span className="text-[#DC2626]">*</span>
-                          </label>
-                          <select
-                            value={selectedCandidate}
-                            onChange={(e) => setSelectedCandidate(e.target.value)}
-                            className="w-full px-4 py-2 border border-[#E5E5E5] rounded-[6px] text-[14px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
-                          >
-                            <option value="">Select candidate...</option>
-                            {candidates.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.candidateName} ({c.email})
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-[14px] font-medium text-[#0D0D0D] mb-2">
-                            Time Slot <span className="text-[#DC2626]">*</span>
-                          </label>
-                          <select
-                            value={selectedTimeSlot}
-                            onChange={(e) => setSelectedTimeSlot(e.target.value)}
-                            className="w-full px-4 py-2 border border-[#E5E5E5] rounded-[6px] text-[14px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
-                          >
-                            <option value="">Select time slot...</option>
-                            {timeSlots.slice(0, 50).map((slot, idx) => (
-                              <option key={idx} value={slot.startTime}>
-                                {new Date(slot.startTime).toLocaleDateString()} - {slot.time}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[14px] text-[#0D0D0D]">Emails Sent:</span>
+                        <span className={`text-[14px] font-semibold ${
+                          scheduledInterviews.filter(i => i.emailSent).length > 0 ? 'text-[#059669]' : 'text-[#787878]'
+                        }`}>
+                          {scheduledInterviews.filter(i => i.emailSent).length}
+                        </span>
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-[14px] font-medium text-[#0D0D0D] mb-2">
-                            Interview Type <span className="text-[#DC2626]">*</span>
-                          </label>
-                          <select
-                            value={interviewType}
-                            onChange={(e) => setInterviewType(e.target.value as any)}
-                            className="w-full px-4 py-2 border border-[#E5E5E5] rounded-[6px] text-[14px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
-                          >
-                            <option value="video">Video Call</option>
-                            <option value="in-person">In-Person</option>
-                            <option value="phone">Phone Call</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-[14px] font-medium text-[#0D0D0D] mb-2">
-                            Meeting Link <span className="text-[#DC2626]">*</span>
-                          </label>
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={meetingLink}
-                              onChange={(e) => setMeetingLink(e.target.value)}
-                              placeholder="https://meet.company.com/interview/123456"
-                              className="flex-1 px-4 py-2 border border-[#E5E5E5] rounded-[6px] text-[14px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
-                            />
-                            {meetingLink && (
-                              <button
-                                onClick={() => handleCopyMeetingLink(meetingLink)}
-                                className="px-3 py-2 border border-[#E5E5E5] rounded-[6px] hover:bg-[#FAFAFA] transition-colors flex items-center gap-1.5"
-                                title="Copy meeting link"
-                              >
-                                {copiedLink === meetingLink ? (
-                                  <>
-                                    <Check className="w-4 h-4 text-[#059669]" />
-                                    <span className="text-[12px] text-[#059669]">Copied!</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy className="w-4 h-4 text-[#6366F1]" />
-                                    <span className="text-[12px] text-[#6366F1]">Copy</span>
-                                  </>
-                                )}
-                              </button>
-                            )}
-                          </div>
-                          <p className="text-[12px] text-[#787878] mt-1">
-                            Enter the meeting link (e.g., Zoom, Google Meet, Teams). This will be included in the calendar invite and email.
-                          </p>
-                        </div>
-                      </div>
-
-                      {interviewType === 'in-person' && (
-                        <div>
-                          <label className="block text-[14px] font-medium text-[#0D0D0D] mb-2">
-                            Location
-                          </label>
-                          <input
-                            type="text"
-                            value={location}
-                            onChange={(e) => setLocation(e.target.value)}
-                            placeholder="Office address or room number"
-                            className="w-full px-4 py-2 border border-[#E5E5E5] rounded-[6px] text-[14px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
-                          />
-                        </div>
-                      )}
-
-                      <div>
-                        <label className="block text-[14px] font-medium text-[#0D0D0D] mb-2">
-                          Interview Title (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          value={interviewTitle}
-                          onChange={(e) => setInterviewTitle(e.target.value)}
-                          placeholder="e.g., Technical Interview - Python Developer"
-                          className="w-full px-4 py-2 border border-[#E5E5E5] rounded-[6px] text-[14px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
-                        />
-                      </div>
-
-                      <button
-                        onClick={handleScheduleInterview}
-                        disabled={isScheduling || !selectedCandidate || !selectedTimeSlot || !meetingLink.trim()}
-                        className="w-full px-4 py-2 bg-[#6366F1] text-white rounded-[6px] font-medium text-[14px] hover:bg-[#4F46E5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        {isScheduling ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Scheduling...
-                          </>
-                        ) : (
-                          <>
-                            <Calendar className="w-4 h-4" />
-                            Schedule Interview
-                          </>
-                        )}
-                      </button>
                     </div>
-                  )}
-                </motion.div>
-
-                {/* Scheduled Interviews List */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="bg-white rounded-[8px] p-6 border border-[#E5E5E5] mb-6"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[17px] font-semibold text-[#0D0D0D]">
-                      Scheduled Interviews ({scheduledInterviews.length}/3)
-                    </h3>
                   </div>
 
-                  {scheduledInterviews.length === 0 ? (
-                    <p className="text-[14px] text-[#787878] text-center py-8">
-                      No interviews scheduled yet. Click "New Interview" to schedule one.
-                    </p>
-                  ) : (
-                    <div className="space-y-4">
+                  {/* Scheduled Interviews List (if any) */}
+                  {scheduledInterviews.length > 0 && (
+                    <div className="mt-6 space-y-3">
+                      <h4 className="text-[15px] font-semibold text-[#0D0D0D] mb-3">Your Scheduled Interviews:</h4>
                       {scheduledInterviews.map((interview) => (
                         <div
                           key={interview.id}
@@ -924,148 +742,37 @@ HR Manager`;
                               : 'border-[#E5E5E5] bg-white'
                           }`}
                         >
-                          <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center justify-between">
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <User className="w-5 h-5 text-[#6366F1]" />
-                                <h4 className="text-[15px] font-semibold text-[#0D0D0D]">
+                              <div className="flex items-center gap-2 mb-1">
+                                <User className="w-4 h-4 text-[#6366F1]" />
+                                <h5 className="text-[14px] font-semibold text-[#0D0D0D]">
                                   {interview.candidateName}
-                                </h4>
+                                </h5>
                                 {interview.emailSent && (
-                                  <CheckCircle2 className="w-5 h-5 text-[#059669]" />
+                                  <CheckCircle2 className="w-4 h-4 text-[#059669]" />
                                 )}
                               </div>
-                              <div className="space-y-1 text-[13px] text-[#787878]">
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="w-4 h-4" />
-                                  <span>
-                                    {new Date(interview.startTime).toLocaleDateString()} at{' '}
-                                    {new Date(interview.startTime).toLocaleTimeString([], {
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Clock className="w-4 h-4" />
-                                  <span>{interview.duration} minutes</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {interview.interviewType === 'video' ? (
-                                    <Video className="w-4 h-4" />
-                                  ) : interview.interviewType === 'in-person' ? (
-                                    <MapPin className="w-4 h-4" />
-                                  ) : (
-                                    <Phone className="w-4 h-4" />
-                                  )}
-                                  <span className="capitalize">{interview.interviewType}</span>
-                                  {interview.location && (
-                                    <span className="ml-2">- {interview.location}</span>
-                                  )}
-                                </div>
-                                {interview.meetingLink && (
-                                  <div className="flex items-center gap-2">
-                                    <Video className="w-4 h-4" />
-                                    <span className="text-[#0D0D0D] break-all">{interview.meetingLink}</span>
-                                    <button
-                                      onClick={() => handleCopyMeetingLink(interview.meetingLink)}
-                                      className="p-1 hover:bg-[#F3F4F6] rounded transition-colors flex-shrink-0"
-                                      title="Copy meeting link"
-                                    >
-                                      {copiedLink === interview.meetingLink ? (
-                                        <Check className="w-4 h-4 text-[#059669]" />
-                                      ) : (
-                                        <Copy className="w-4 h-4 text-[#6366F1]" />
-                                      )}
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
+                              <p className="text-[12px] text-[#787878]">
+                                {new Date(interview.startTime).toLocaleString()} • {interview.duration} min
+                              </p>
                             </div>
-                            <div className="flex flex-col gap-2">
-                              {interview.emailSent ? (
-                                <span className="text-[12px] px-2 py-1 bg-[#059669] text-white rounded">
-                                  Email Sent
-                                </span>
-                              ) : (
-                                <button
-                                  onClick={() => setShowEmailForm(prev => ({ ...prev, [interview.id]: !prev[interview.id] }))}
-                                  className="px-3 py-1.5 bg-[#6366F1] text-white rounded-[6px] text-[13px] font-medium hover:bg-[#4F46E5] transition-colors flex items-center gap-1.5"
-                                >
-                                  <Mail className="w-3 h-3" />
-                                  {showEmailForm[interview.id] ? 'Hide Email' : 'Send Email'}
-                                </button>
-                              )}
-                            </div>
+                            {interview.emailSent ? (
+                              <span className="text-[11px] px-2 py-1 bg-[#059669] text-white rounded">
+                                Email Sent
+                              </span>
+                            ) : (
+                              <span className="text-[11px] px-2 py-1 bg-[#FEF3C7] text-[#D97706] rounded">
+                                Email Pending
+                              </span>
+                            )}
                           </div>
-                          
-                          {/* Email Form - Integrated */}
-                          {!interview.emailSent && showEmailForm[interview.id] && (
-                            <div className="mt-4 p-4 bg-[#FAFAFA] border border-[#E5E5E5] rounded-[6px] space-y-3">
-                              <h5 className="text-[14px] font-semibold text-[#0D0D0D]">Send Interview Invitation Email</h5>
-                              
-                              <div>
-                                <label className="block text-[13px] font-medium text-[#0D0D0D] mb-1">
-                                  Subject
-                                </label>
-                                <input
-                                  type="text"
-                                  value={emailSubjects[interview.id] || ''}
-                                  onChange={(e) => setEmailSubjects(prev => ({ ...prev, [interview.id]: e.target.value }))}
-                                  placeholder="Interview Invitation - Python Developer Position"
-                                  className="w-full px-3 py-2 border border-[#E5E5E5] rounded-[6px] text-[13px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
-                                />
-                              </div>
-                              
-                              <div>
-                                <label className="block text-[13px] font-medium text-[#0D0D0D] mb-1">
-                                  Email Body
-                                </label>
-                                <textarea
-                                  value={emailBodies[interview.id] || ''}
-                                  onChange={(e) => setEmailBodies(prev => ({ ...prev, [interview.id]: e.target.value }))}
-                                  placeholder="Email content..."
-                                  rows={8}
-                                  className="w-full px-3 py-2 border border-[#E5E5E5] rounded-[6px] text-[13px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1] resize-none"
-                                />
-                                <p className="text-[11px] text-[#787878] mt-1">
-                                  The email will be sent to both the candidate and interviewer. Resume will be attached to the interviewer email.
-                                </p>
-                              </div>
-                              
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => handleSendEmail(interview.id, interview)}
-                                  disabled={isSendingEmail[interview.id]}
-                                  className="flex-1 px-4 py-2 bg-[#6366F1] text-white rounded-[6px] text-[13px] font-medium hover:bg-[#4F46E5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                >
-                                  {isSendingEmail[interview.id] ? (
-                                    <>
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                      Sending...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Send className="w-4 h-4" />
-                                      Send Email
-                                    </>
-                                  )}
-                                </button>
-                                <button
-                                  onClick={() => setShowEmailForm(prev => ({ ...prev, [interview.id]: false }))}
-                                  className="px-4 py-2 bg-[#F3F4F6] text-[#0D0D0D] rounded-[6px] text-[13px] font-medium hover:bg-[#E5E5E5] transition-colors"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>
                   )}
-                </motion.div>
-              </>
+                </div>
+              </motion.div>
             )}
 
             {/* Submission Form */}
@@ -1162,7 +869,7 @@ HR Manager`;
                   (isResumeScreening
                     ? selectedResumes.length !== 3
                     : isInterviewScheduling
-                    ? scheduledInterviews.length < 3 || scheduledInterviews.some(i => !i.emailSent)
+                    ? scheduledInterviews.length < 1 || scheduledInterviews.filter(i => i.emailSent).length < 1
                     : !uploadedFileUrl && !textInput.trim())
                 }
                 className="w-full px-4 py-3 bg-[#6366F1] text-white rounded-[6px] font-medium text-[15px] hover:bg-[#4F46E5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
