@@ -1,8 +1,11 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useSimulationStore } from '../../store/simulationStore';
 
 export default function ContextPanel() {
+  const navigate = useNavigate();
   const context = useSimulationStore((state) => state.context);
+  const tasks = useSimulationStore((state) => state.tasks);
 
   if (!context) {
     return (
@@ -57,6 +60,38 @@ export default function ContextPanel() {
             ))}
           </ul>
         </div>
+
+        {/* View Performance Result Button */}
+        {tasks.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="pt-4"
+          >
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/performance')}
+              className="w-full px-4 py-3 bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white text-[14px] font-semibold rounded-[8px] shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+              View Performance Result
+            </motion.button>
+          </motion.div>
+        )}
       </div>
     </div>
   );

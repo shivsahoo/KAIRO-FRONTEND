@@ -379,6 +379,9 @@ export async function submitTask(data: {
   audioUrl?: string;
   selectedResumes?: string[];
   resumeRatings?: any[];
+  interviewIds?: string[];
+  emailIds?: string[];
+  isFinalSubmission?: boolean;
 }): Promise<{
   submission: {
     id: string;
@@ -427,7 +430,7 @@ export async function getCandidates(): Promise<{
   candidates: any[];
   count: number;
 }> {
-  return apiCall('/interview/candidates');
+  return apiCall('/interviews/candidates');
 }
 
 /**
@@ -444,14 +447,18 @@ export async function getAvailableTimeSlots(date?: string): Promise<{
   count: number;
 }> {
   const params = date ? `?date=${date}` : '';
-  return apiCall(`/interview/time-slots${params}`);
+  return apiCall(`/interviews/time-slots${params}`);
 }
 
 /**
  * Create interview schedule
  */
 export async function scheduleInterview(data: {
-  candidateId: string;
+  candidateId?: string;
+  candidateEmail: string;
+  candidateName?: string;
+  interviewerEmail?: string;
+  interviewerName?: string;
   resumeId?: string;
   startTime: string;
   endTime: string;
@@ -477,7 +484,7 @@ export async function scheduleInterview(data: {
   };
   message: string;
 }> {
-  return apiCall('/interview/schedule', {
+  return apiCall('/interviews/schedule', {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -487,33 +494,33 @@ export async function scheduleInterview(data: {
  * Send interview email to candidate and interviewer
  */
 export async function sendInterviewEmail(data: {
-  interviewId: string;
-  meetingLink: string; // REQUIRED
-  resumeId: string; // REQUIRED for evaluation
-  candidateEmail: string; // REQUIRED
-  interviewerEmail: string | { name: string; email: string }; // REQUIRED
-  subject?: string;
-  body?: string;
+  interviewId?: string;
+  meetingLink?: string;
+  resumeId?: string;
+  to: string;
+  cc: string;
+  subject: string;
+  body: string;
   attachResume?: boolean;
 }): Promise<{
-  emails: Array<{
+  email: {
     id: string;
-    type: 'candidate' | 'interviewer';
     subject: string;
     body: string;
     to: Array<{ name: string; email: string }>;
+    cc: Array<{ name: string; email: string }>;
     sentAt: string;
     attachments: any[];
-    meetingLink: string;
-  }>;
+    meetingLink: string | null;
+  };
   interview: {
     id: string;
     emailSent: boolean;
     meetingLink: string;
-  };
+  } | null;
   message: string;
 }> {
-  return apiCall('/interview/send-email', {
+  return apiCall('/interviews/send-email', {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -540,7 +547,7 @@ export async function getInterviews(): Promise<{
   }>;
   count: number;
 }> {
-  return apiCall('/interview/interviews');
+  return apiCall('/interviews/interviews');
 }
 
 /**
@@ -554,6 +561,6 @@ export async function getInbox(folder: string = 'inbox', taskId?: string): Promi
   if (folder) params.append('folder', folder);
   if (taskId) params.append('taskId', taskId);
   const query = params.toString() ? `?${params.toString()}` : '';
-  return apiCall(`/interview/inbox${query}`);
+  return apiCall(`/interviews/inbox${query}`);
 }
 
