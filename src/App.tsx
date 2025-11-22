@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import TaskDetail from './pages/TaskDetail';
 import Interview from './pages/Interview';
+import TaskResult from './pages/TaskResult';
 
 function AppContent() {
   const location = useLocation();
@@ -15,10 +16,11 @@ function AppContent() {
   const isSignupPage = location.pathname === '/signup';
   const isSimulationPage = location.pathname === '/simulation';
   const isInterviewPage = location.pathname === '/interview';
+  const isTaskResultPage = location.pathname === '/task-result';
 
   return (
     <>
-      {!isLoginPage && !isSignupPage && !isSimulationPage && !isInterviewPage && <Navbar />}
+      {!isLoginPage && !isSignupPage && !isSimulationPage && !isInterviewPage && !isTaskResultPage && <Navbar />}
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
@@ -26,6 +28,7 @@ function AppContent() {
         <Route path="/simulation" element={<Simulation />} />
         <Route path="/interview" element={<Interview />} />
         <Route path="/task/:taskId" element={<TaskDetail />} />
+        <Route path="/task-result" element={<TaskResult />} />
         <Route path="/report" element={<PerformanceReport />} />
         <Route path="/performance" element={<PerformanceDashboard />} />
       </Routes>
