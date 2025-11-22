@@ -522,7 +522,7 @@ export default function ChatPanel() {
       <div className="px-6 py-4 border-b border-[#E5E5E5] bg-white">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-[17px] font-semibold text-[#0D0D0D]">Simulation Chat</h2>
+            <h2 className="text-[17px] font-semibold text-[#0D0D0D]">Sarah - Manager</h2>
             <p className="text-[13px] text-[#787878] mt-0.5">Interact with your AI colleagues</p>
           </div>
           <div className="flex items-center gap-2">
@@ -564,11 +564,138 @@ export default function ChatPanel() {
                     {message.sender}
                   </div>
                 )}
-                <p className={`text-[14px] leading-relaxed whitespace-pre-wrap ${
+                <div className={`text-[14px] leading-relaxed ${
                   message.type === 'user' ? 'text-white' : 'text-[#0D0D0D]'
                 }`}>
-                  {message.content}
-                </p>
+                  {message.content.split('\n').map((line, lineIdx) => {
+                    // Parse line for markdown: **bold** and [link](url)
+                    const parts = [];
+                    let remaining = line;
+                    let key = 0;
+                    
+                    while (remaining.length > 0) {
+                      // Find next bold or link
+                      const boldMatch = remaining.match(/\*\*(.*?)\*\*/);
+                      const linkMatch = remaining.match(/\[([^\]]+)\]\(([^)]+)\)/);
+                      
+                      let nextMatch = null;
+                      let matchType = null;
+                      let matchIndex = Infinity;
+                      
+                      if (boldMatch && boldMatch.index !== undefined) {
+                        if (boldMatch.index < matchIndex) {
+                          matchIndex = boldMatch.index;
+                          nextMatch = boldMatch;
+                          matchType = 'bold';
+                        }
+                      }
+                      
+                      if (linkMatch && linkMatch.index !== undefined) {
+                        if (linkMatch.index < matchIndex) {
+                          matchIndex = linkMatch.index;
+                          nextMatch = linkMatch;
+                          matchType = 'link';
+                        }
+                      }
+                      
+                      if (nextMatch && matchIndex < Infinity) {
+                        // Add text before match
+                        if (matchIndex > 0) {
+                          parts.push({ type: 'text', content: remaining.substring(0, matchIndex), key: key++ });
+                        }
+                        
+                        // Add match
+                        if (matchType === 'bold') {
+                          parts.push({ type: 'bold', content: nextMatch[1], key: key++ });
+                        } else if (matchType === 'link') {
+                          parts.push({ type: 'link', content: nextMatch[1], url: nextMatch[2], key: key++ });
+                        }
+                        
+                        // Update remaining
+                        remaining = remaining.substring(matchIndex + nextMatch[0].length);
+                      } else {
+                        // No more matches, add remaining text
+                        if (remaining.length > 0) {
+                          parts.push({ type: 'text', content: remaining, key: key++ });
+                        }
+                        break;
+                      }
+                    }
+                    
+                    if (parts.length === 0) {
+                      parts.push({ type: 'text', content: line, key: 0 });
+                    }
+                    
+                    return (
+                      <div key={lineIdx} className="mb-1 last:mb-0">
+                        {parts.map((part) => {
+                          if (part.type === 'bold') {
+                            return (
+                              <strong key={part.key} className="font-semibold">
+                                {part.content}
+                              </strong>
+                            );
+                          } else if (part.type === 'link') {
+                            // Check if it's a resume download link
+                            const isResumeDownload = part.url.includes('/resume/') && part.url.includes('/download');
+                            
+                            return (
+                              <a
+                                key={part.key}
+                                href={part.url}
+                                {...(isResumeDownload ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+                                className={`underline ${message.type === 'user' ? 'text-white' : 'text-[#6366F1]'} hover:opacity-80`}
+                                onClick={async (e) => {
+                                  if (isResumeDownload) {
+                                    // For resume downloads, trigger download with authentication
+                                    e.preventDefault();
+                                    try {
+                                      const token = localStorage.getItem('authToken');
+                                      if (!token) {
+                                        alert('Please login to download the resume.');
+                                        return;
+                                      }
+                                      
+                                      const response = await fetch(part.url, {
+                                        method: 'GET',
+                                        headers: {
+                                          'Authorization': `Bearer ${token}`,
+                                        },
+                                      });
+                                      
+                                      if (response.ok) {
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.download = `resume_${Date.now()}.pdf`;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        window.URL.revokeObjectURL(url);
+                                      } else {
+                                        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                                        console.error('Failed to download resume:', errorData);
+                                        alert(errorData.message || 'Failed to download resume. Please try again.');
+                                      }
+                                    } catch (error) {
+                                      console.error('Error downloading resume:', error);
+                                      alert('Error downloading resume. Please try again.');
+                                    }
+                                  }
+                                }}
+                              >
+                                {part.content}
+                              </a>
+                            );
+                          } else {
+                            return <span key={part.key}>{part.content}</span>;
+                          }
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
                 <div className={`text-[11px] mt-1.5 ${
                   message.type === 'user' ? 'text-white/70' : 'text-[#787878]'
                 }`}>

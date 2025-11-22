@@ -1,11 +1,17 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useSimulationStore } from '../../store/simulationStore';
+import { Users, UserCog, UsersRound } from 'lucide-react';
 
 export default function ContextPanel() {
   const navigate = useNavigate();
   const context = useSimulationStore((state) => state.context);
   const tasks = useSimulationStore((state) => state.tasks);
+  const messages = useSimulationStore((state) => state.messages);
+  
+  // Check if the last AI message is from Manager
+  const lastAIMessage = messages.filter(msg => msg.type === 'ai').slice(-1)[0];
+  const isManagerActive = lastAIMessage?.sender?.includes('Manager') || lastAIMessage?.sender === 'Sarah (Manager)';
 
   if (!context) {
     return (
@@ -67,7 +73,7 @@ export default function ContextPanel() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="pt-4"
+            className="pt-4 space-y-3"
           >
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -90,6 +96,61 @@ export default function ContextPanel() {
               </svg>
               View Performance Result
             </motion.button>
+
+            {/* Performance Badges */}
+            <div className="grid grid-cols-3 gap-2">
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="flex flex-col items-center gap-1.5 p-3 bg-[#F5F5F5] rounded-[8px] border border-[#E5E5E5] hover:border-[#6366F1]/30 transition-colors cursor-pointer"
+              >
+                <div className="p-2 bg-[#EEF2FF] rounded-[6px]">
+                  <Users className="w-4 h-4 text-[#6366F1]" />
+                </div>
+                <span className="text-[12px] font-medium text-[#0D0D0D]">General</span>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className={`flex flex-col items-center gap-1.5 p-3 rounded-[8px] border transition-colors cursor-pointer ${
+                  isManagerActive
+                    ? 'bg-[#EEF2FF] border-[#6366F1]'
+                    : 'bg-[#F5F5F5] border-[#E5E5E5] hover:border-[#6366F1]/30'
+                }`}
+              >
+                <div className={`p-2 rounded-[6px] ${
+                  isManagerActive
+                    ? 'bg-[#6366F1]'
+                    : 'bg-[#EEF2FF]'
+                }`}>
+                  <UserCog className={`w-4 h-4 ${
+                    isManagerActive
+                      ? 'text-white'
+                      : 'text-[#6366F1]'
+                  }`} />
+                </div>
+                <span className={`text-[12px] font-medium ${
+                  isManagerActive
+                    ? 'text-[#6366F1]'
+                    : 'text-[#0D0D0D]'
+                }`}>Manager</span>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                className="flex flex-col items-center gap-1.5 p-3 bg-[#F5F5F5] rounded-[8px] border border-[#E5E5E5] hover:border-[#6366F1]/30 transition-colors cursor-pointer"
+              >
+                <div className="p-2 bg-[#EEF2FF] rounded-[6px]">
+                  <UsersRound className="w-4 h-4 text-[#6366F1]" />
+                </div>
+                <span className="text-[12px] font-medium text-[#0D0D0D]">Team</span>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </div>

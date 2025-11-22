@@ -190,8 +190,8 @@ export default function TaskDetail() {
       if (prev.includes(resumeId)) {
         return prev.filter(id => id !== resumeId);
       } else {
-        if (prev.length >= 3) {
-          setError('You can only select up to 3 candidates');
+        if (prev.length >= 2) {
+          setError('You can only select up to 2 candidates');
           return prev;
         }
         return [...prev, resumeId];
@@ -350,8 +350,8 @@ HR Manager`;
   const handleSubmit = async () => {
     if (isResumeScreening) {
       // Validate resume screening submission
-      if (selectedResumes.length !== 3) {
-        setError('Please select exactly 3 candidates');
+      if (selectedResumes.length !== 2) {
+        setError('Please select exactly 2 candidates');
         return;
       }
       
@@ -536,7 +536,7 @@ HR Manager`;
                     Candidate Resumes ({resumes.length})
                   </h3>
                   <div className="text-[14px] text-[#787878]">
-                    Selected: <span className="font-semibold text-[#6366F1]">{selectedResumes.length}/3</span>
+                    Selected: <span className="font-semibold text-[#6366F1]">{selectedResumes.length}/2</span>
                   </div>
                 </div>
 
@@ -551,7 +551,7 @@ HR Manager`;
                         key={resume.id}
                         className={`border-2 rounded-[8px] p-4 transition-all ${
                           isSelected
-                            ? 'border-[#6366F1] bg-[#EEF2FF]'
+                            ? 'border-[#10B981] bg-[#D1FAE5]'
                             : 'border-[#E5E5E5] bg-white hover:border-[#6366F1]/30'
                         }`}
                       >
@@ -563,7 +563,7 @@ HR Manager`;
                                 {resume.candidateName}
                               </h4>
                               {isSelected && (
-                                <span className="text-[12px] font-medium px-2 py-0.5 bg-[#6366F1] text-white rounded">
+                                <span className="text-[12px] font-medium px-2 py-0.5 bg-[#10B981] text-white rounded">
                                   Selected
                                 </span>
                               )}
@@ -674,13 +674,16 @@ HR Manager`;
                           {/* Select Button */}
                           <button
                             onClick={() => toggleResumeSelection(resume.id)}
+                            disabled={!isSelected && selectedResumes.length >= 2}
                             className={`mt-3 w-full px-4 py-2 rounded-[6px] font-medium text-[14px] transition-colors ${
                               isSelected
-                                ? 'bg-[#DC2626] text-white hover:bg-[#B91C1C]'
+                                ? 'bg-[#10B981] text-white hover:bg-[#059669]'
+                                : !isSelected && selectedResumes.length >= 2
+                                ? 'bg-[#E5E5E5] text-[#787878] cursor-not-allowed'
                                 : 'bg-[#6366F1] text-white hover:bg-[#4F46E5]'
                             }`}
                           >
-                            {isSelected ? 'Deselect Candidate' : 'Select as Top 3'}
+                            {isSelected ? 'Selected Candidate' : 'Select as Top 2'}
                           </button>
                         </div>
                       </div>
@@ -803,7 +806,8 @@ HR Manager`;
               </motion.div>
             )}
 
-            {/* Submission Form */}
+            {/* Submission Form - Hidden for hr_t4 */}
+            {!isMockHRCall && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -822,15 +826,15 @@ HR Manager`;
                   onChange={(e) => setTextInput(e.target.value)}
                   placeholder={
                     isResumeScreening
-                      ? 'Explain your reasoning for selecting these 3 candidates...'
+                      ? 'Explain your reasoning for selecting these 2 candidates...'
                       : 'Add any additional notes or context about your submission...'
                   }
                   className="w-full min-h-[100px] px-4 py-3 border border-[#E5E5E5] rounded-[6px] text-[14px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent resize-none"
                 />
               </div>
 
-              {/* File Upload (for non-resume screening tasks) */}
-              {!isResumeScreening && (
+                {/* File Upload (for non-resume screening and non-interview scheduling tasks) */}
+                {!isResumeScreening && !isInterviewScheduling && (
                 <div className="mb-6">
                   <label className="block text-[14px] font-medium text-[#0D0D0D] mb-2">
                     Upload Job Description File
@@ -889,14 +893,13 @@ HR Manager`;
                 </div>
               )}
 
-              {/* Submit Button - Hidden for hr_t4 */}
-              {!isMockHRCall && (
+                {/* Submit Button */}
                 <button
                   onClick={handleSubmit}
                   disabled={
                     isSubmitting ||
                     (isResumeScreening
-                      ? selectedResumes.length !== 3
+                      ? selectedResumes.length !== 2
                       : isInterviewScheduling
                       ? scheduledInterviews.length < 1 || scheduledInterviews.filter(i => i.emailSent).length < 1
                       : !uploadedFileUrl && !textInput.trim())
@@ -912,16 +915,8 @@ HR Manager`;
                     'Submit Task'
                   )}
                 </button>
-              )}
-              
-              {isMockHRCall && !submissionResponse && (
-                <div className="text-center py-4">
-                  <p className="text-[14px] text-[#787878] mb-2">
-                    Start the interview to automatically submit your transcript for evaluation.
-                  </p>
-                </div>
-              )}
             </motion.div>
+            )}
 
             {/* Submission Response */}
             {submissionResponse && (

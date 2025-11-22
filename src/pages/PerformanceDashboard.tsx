@@ -128,10 +128,15 @@ export default function PerformanceDashboard() {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/')}
-            className="px-4 py-2 bg-[#6366F1] text-white text-sm font-medium rounded-lg hover:bg-[#4F46E5] transition-colors"
+            onClick={() => navigate('/certificate')}
+            disabled={completedTasks.length < 4}
+            className={`px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${
+              completedTasks.length >= 4
+                ? 'bg-[#6366F1] hover:bg-[#4F46E5] cursor-pointer'
+                : 'bg-[#9CA3AF] cursor-not-allowed'
+            }`}
           >
-            Start New Simulation
+            End Simulation
           </motion.button>
         </div>
 
@@ -398,7 +403,10 @@ export default function PerformanceDashboard() {
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={[{ value: selectedTask.score ? selectedTask.score * 10 : 0, name: 'Score' }]}
+                          data={[
+                            { value: selectedTask.score ? selectedTask.score * 10 : 0, name: 'Score' },
+                            { value: 100 - (selectedTask.score ? selectedTask.score * 10 : 0), name: 'Remaining' }
+                          ]}
                           cx="50%"
                           cy="50%"
                           innerRadius={30}
@@ -407,18 +415,7 @@ export default function PerformanceDashboard() {
                           endAngle={-270}
                           dataKey="value"
                         >
-                          <Cell fill={selectedTask.score ? getScoreColor(selectedTask.score * 10) : '#E5E7EB'} />
-                        </Pie>
-                        <Pie
-                          data={[{ value: 100 - (selectedTask.score ? selectedTask.score * 10 : 0), name: 'Remaining' }]}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={30}
-                          outerRadius={48}
-                          startAngle={90}
-                          endAngle={-270}
-                          dataKey="value"
-                        >
+                          <Cell fill={selectedTask.score ? '#6366F1' : '#E5E7EB'} />
                           <Cell fill="#F3F4F6" />
                         </Pie>
                       </PieChart>

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Calendar as CalendarIcon, Clock, User, Video, MapPin, Phone, Copy, Check, Loader2, Mail } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Calendar as CalendarIcon, Copy, Check, Loader2, FileText, Upload } from 'lucide-react';
 import { scheduleInterview } from '../../utils/api';
 
 interface CalendarModalProps {
@@ -20,6 +20,8 @@ export default function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [scheduledInterview, setScheduledInterview] = useState<any>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -34,6 +36,10 @@ export default function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
       setScheduledInterview(null);
       setError(null);
       setInterviewType('video');
+      setResumeFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   }, [isOpen]);
 
@@ -192,6 +198,10 @@ export default function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                     setTitle('');
                     setDescription('');
                     setLocation('');
+                    setResumeFile(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                    }
                   }}
                   className="px-4 py-2.5 bg-white border border-[#E5E5E5] text-[#0D0D0D] rounded-[6px] text-[14px] font-medium hover:bg-[#FAFAFA] transition-colors"
                 >
@@ -322,6 +332,63 @@ export default function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                   rows={3}
                   className="w-full px-4 py-2.5 border border-[#E5E5E5] rounded-[6px] text-[14px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1] resize-none"
                 />
+              </div>
+
+              {/* Resume Attachment (Demo Only) */}
+              <div>
+                <label className="block text-[14px] font-medium text-[#0D0D0D] mb-2">
+                  Attach Resume (Demo)
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setResumeFile(file);
+                  }}
+                  className="hidden"
+                  id="resume-upload"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`w-full px-4 py-2.5 border rounded-[6px] text-[14px] font-medium transition-colors flex items-center justify-center gap-2 ${
+                    resumeFile
+                      ? 'bg-[#D1FAE5] border-[#059669] text-[#059669]'
+                      : 'bg-white border-[#E5E5E5] text-[#0D0D0D] hover:bg-[#FAFAFA]'
+                  }`}
+                >
+                  {resumeFile ? (
+                    <>
+                      <FileText className="w-4 h-4" />
+                      <span className="flex-1 text-left truncate">{resumeFile.name}</span>
+                      <Check className="w-4 h-4 flex-shrink-0" />
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      Choose Resume File
+                    </>
+                  )}
+                </button>
+                {resumeFile && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResumeFile(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                    className="mt-2 text-[12px] text-[#DC2626] hover:text-[#B91C1C] underline"
+                  >
+                    Remove Resume
+                  </button>
+                )}
+                {/* <p className="text-[12px] text-[#787878] mt-1">
+                  This is for demo purposes only. The resume will not be sent to the backend.
+                </p> */}
               </div>
 
               {/* Actions */}

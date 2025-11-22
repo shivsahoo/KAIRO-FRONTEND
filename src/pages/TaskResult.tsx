@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle2, XCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, ArrowLeft, Loader2, TrendingUp, Lightbulb, Award } from 'lucide-react';
 
 interface SubmissionResponse {
   submission: {
@@ -96,109 +96,157 @@ export default function TaskResult() {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        {/* Success Banner */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`rounded-[8px] p-6 border ${
-            submissionResponse.canProceed
-              ? 'bg-[#D1FAE5] border-[#059669]'
-              : 'bg-[#FEF3C7] border-[#D97706]'
-          }`}
+          className="mb-8"
         >
-          <div className="flex items-start gap-3 mb-4">
+          <div className={`flex items-start gap-4 p-6 rounded-[12px] ${
+            submissionResponse.canProceed
+              ? 'bg-gradient-to-r from-[#D1FAE5] to-[#ECFDF5] border border-[#10B981]/20'
+              : 'bg-gradient-to-r from-[#FEF3C7] to-[#FFFBEB] border border-[#F59E0B]/20'
+          }`}>
+            <div className={`p-2 rounded-[8px] ${
+              submissionResponse.canProceed ? 'bg-[#10B981]' : 'bg-[#F59E0B]'
+            }`}>
             {submissionResponse.canProceed ? (
-              <CheckCircle2 className="w-6 h-6 text-[#059669] flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-6 h-6 text-white" />
             ) : (
-              <XCircle className="w-6 h-6 text-[#D97706] flex-shrink-0 mt-0.5" />
+                <XCircle className="w-6 h-6 text-white" />
             )}
+            </div>
             <div className="flex-1">
-              <h3 className="text-[17px] font-semibold text-[#0D0D0D] mb-2">
+              <h2 className="text-[20px] font-semibold text-[#0D0D0D] mb-1">
                 {submissionResponse.canProceed ? 'Task Submitted Successfully!' : 'Task Needs Improvement'}
-              </h3>
-              <p className="text-[15px] text-[#0D0D0D] mb-4">{submissionResponse.message}</p>
+              </h2>
+              <p className="text-[15px] text-[#0D0D0D]/80">{submissionResponse.message}</p>
+            </div>
+          </div>
+        </motion.div>
 
               {submissionResponse.submission && (
-                <div className="space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Score Card */}
                   {submissionResponse.submission.score !== null && (
-                    <div className="bg-white rounded-[6px] p-4">
-                      <p className="text-[14px] font-medium text-[#0D0D0D] mb-1">Score:</p>
-                      <p className="text-[24px] font-bold text-[#0D0D0D]">
-                        {submissionResponse.submission.score}/10
-                      </p>
-                    </div>
-                  )}
-
-                  {submissionResponse.submission.feedback && (
-                    <div className="bg-white rounded-[6px] p-4">
-                      <p className="text-[14px] font-medium text-[#0D0D0D] mb-2">Feedback:</p>
-                      <p className="text-[14px] text-[#0D0D0D] whitespace-pre-wrap">
-                        {submissionResponse.submission.feedback}
-                      </p>
-                    </div>
-                  )}
-
-                  {submissionResponse.submission.improvements && (
-                    <div className="bg-white rounded-[6px] p-4">
-                      <p className="text-[14px] font-medium text-[#0D0D0D] mb-2">Improvements:</p>
-                      <p className="text-[14px] text-[#0D0D0D] whitespace-pre-wrap">
-                        {submissionResponse.submission.improvements}
-                      </p>
-                    </div>
-                  )}
-
-                  {submissionResponse.scoreInfo && (
-                    <div className="bg-white rounded-[6px] p-4">
-                      <p className="text-[13px] text-[#787878] mb-2">Score Information:</p>
-                      <div className="space-y-1">
-                        <p className="text-[13px] text-[#0D0D0D]">
-                          Current Score: <span className="font-semibold">{submissionResponse.scoreInfo.currentScore}/10</span>
-                        </p>
-                        <p className="text-[13px] text-[#0D0D0D]">
-                          Passing Score: <span className="font-semibold">{submissionResponse.scoreInfo.passingScore}/10</span>
-                        </p>
-                        <p className="text-[13px] text-[#0D0D0D]">
-                          Score Range: {submissionResponse.scoreInfo.min}-{submissionResponse.scoreInfo.max}
-                        </p>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-[12px] p-6 border border-[#E5E5E5] shadow-sm"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-[#EEF2FF] rounded-[8px]">
+                    <Award className="w-5 h-5 text-[#6366F1]" />
+                  </div>
+                  <h3 className="text-[14px] font-medium text-[#787878]">Score</h3>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[48px] font-bold text-[#0D0D0D] leading-none">
+                    {submissionResponse.submission.score}
+                  </span>
+                  <span className="text-[20px] font-medium text-[#787878]">/10</span>
+                </div>
+                {submissionResponse.scoreInfo && (
+                  <div className="mt-4 pt-4 border-t border-[#E5E5E5]">
+                    <div className="space-y-2 text-[13px]">
+                      <div className="flex justify-between">
+                        <span className="text-[#787878]">Passing Score</span>
+                        <span className="font-medium text-[#0D0D0D]">{submissionResponse.scoreInfo.passingScore}/10</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#787878]">Range</span>
+                        <span className="font-medium text-[#0D0D0D]">{submissionResponse.scoreInfo.min}-{submissionResponse.scoreInfo.max}</span>
                       </div>
                     </div>
+                  </div>
+                )}
+              </motion.div>
+                  )}
+
+            {/* Feedback Card */}
+                  {submissionResponse.submission.feedback && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="lg:col-span-2 bg-white rounded-[12px] p-6 border border-[#E5E5E5] shadow-sm"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-[#ECFDF5] rounded-[8px]">
+                    <TrendingUp className="w-5 h-5 text-[#10B981]" />
+                  </div>
+                  <h3 className="text-[16px] font-semibold text-[#0D0D0D]">Feedback</h3>
+                </div>
+                <p className="text-[15px] text-[#0D0D0D] leading-relaxed whitespace-pre-wrap">
+                        {submissionResponse.submission.feedback}
+                      </p>
+              </motion.div>
+                  )}
+
+            {/* Improvements Card */}
+                  {submissionResponse.submission.improvements && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="lg:col-span-3 bg-white rounded-[12px] p-6 border border-[#E5E5E5] shadow-sm"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-[#FEF3C7] rounded-[8px]">
+                    <Lightbulb className="w-5 h-5 text-[#F59E0B]" />
+                  </div>
+                  <h3 className="text-[16px] font-semibold text-[#0D0D0D]">Improvements</h3>
+                </div>
+                <p className="text-[15px] text-[#0D0D0D] leading-relaxed whitespace-pre-wrap">
+                        {submissionResponse.submission.improvements}
+                      </p>
+              </motion.div>
                   )}
                 </div>
               )}
 
+        {/* Next Task or Completion */}
               {submissionResponse.canProceed && submissionResponse.nextTask && (
-                <div className="mt-4 bg-white rounded-[6px] p-4">
-                  <p className="text-[13px] font-medium text-[#0D0D0D] mb-1">Next Task:</p>
-                  <p className="text-[14px] text-[#0D0D0D] font-semibold">{submissionResponse.nextTask.title}</p>
-                  <p className="text-[13px] text-[#787878] mt-1">{submissionResponse.nextTask.description}</p>
-                </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-white rounded-[12px] p-6 border border-[#E5E5E5] shadow-sm mb-8"
+          >
+            <h3 className="text-[16px] font-semibold text-[#0D0D0D] mb-3">Next Task</h3>
+            <p className="text-[15px] font-medium text-[#0D0D0D] mb-2">{submissionResponse.nextTask.title}</p>
+            <p className="text-[14px] text-[#787878]">{submissionResponse.nextTask.description}</p>
+          </motion.div>
               )}
 
               {submissionResponse.completed && (
-                <div className="mt-4 bg-white rounded-[6px] p-4">
-                  <p className="text-[14px] font-semibold text-[#0D0D0D]">🎉 Congratulations!</p>
-                  <p className="text-[13px] text-[#0D0D0D] mt-1">You have completed all tasks in this simulation.</p>
-                </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-gradient-to-r from-[#EEF2FF] to-[#F5F7FF] rounded-[12px] p-8 border border-[#6366F1]/20 shadow-sm mb-8 text-center"
+          >
+            <div className="text-[48px] mb-3">🎉</div>
+            <h3 className="text-[20px] font-semibold text-[#0D0D0D] mb-2">Congratulations!</h3>
+            <p className="text-[15px] text-[#787878]">You have completed all tasks in this simulation.</p>
+          </motion.div>
               )}
 
-              <div className="mt-6 flex gap-3">
+        {/* Action Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="flex justify-center"
+        >
                 <button
                   onClick={() => navigate('/simulation')}
-                  className="flex-1 px-4 py-3 bg-[#6366F1] text-white rounded-[6px] font-medium text-[15px] hover:bg-[#4F46E5] transition-colors"
+            className="px-8 py-3 bg-[#6366F1] text-white rounded-[8px] font-medium text-[15px] hover:bg-[#4F46E5] transition-all hover:shadow-lg"
                 >
                   Return to Simulation
                 </button>
-                {submissionResponse.canProceed && submissionResponse.nextTask && (
-                  <button
-                    onClick={() => navigate('/simulation')}
-                    className="px-4 py-3 bg-white border border-[#E5E5E5] text-[#0D0D0D] rounded-[6px] font-medium text-[15px] hover:bg-[#FAFAFA] transition-colors"
-                  >
-                    Continue
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
         </motion.div>
       </div>
     </div>
