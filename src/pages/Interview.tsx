@@ -49,7 +49,7 @@ function InterviewSession() {
               <div className="w-32 h-32 bg-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center">
                 <span className="text-4xl text-white">AI</span>
               </div>
-              <p className="text-white text-lg">AI Interviewer</p>
+              <p className="text-white text-lg">Alex</p>
               <p className="text-gray-400 text-sm mt-2">Connected</p>
             </div>
           </div>
