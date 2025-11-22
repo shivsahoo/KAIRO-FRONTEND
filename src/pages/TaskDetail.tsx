@@ -67,6 +67,7 @@ export default function TaskDetail() {
 
   const isResumeScreening = taskId === 'hr_t2';
   const isInterviewScheduling = taskId === 'hr_t3';
+  const isMockHRCall = taskId === 'hr_t4';
 
   useEffect(() => {
     const loadTask = async () => {
@@ -689,6 +690,33 @@ HR Manager`;
               </motion.div>
             )}
 
+            {/* Mock HR Call UI (for hr_t4) */}
+            {isMockHRCall && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-[8px] p-6 border border-[#E5E5E5] mb-6"
+              >
+                <div className="text-center py-8">
+                  <Video className="w-16 h-16 text-[#6366F1] mx-auto mb-4" />
+                  <h3 className="text-[18px] font-semibold text-[#0D0D0D] mb-2">
+                    Conduct Mock HR Screening Call
+                  </h3>
+                  <p className="text-[14px] text-[#787878] mb-6 max-w-md mx-auto">
+                    Start a live interview with an AI candidate. The transcript will be automatically captured and submitted for evaluation when you end the call.
+                  </p>
+                  <button
+                    onClick={() => navigate('/interview?taskId=hr_t4')}
+                    className="px-6 py-3 bg-[#6366F1] text-white rounded-[6px] font-medium text-[15px] hover:bg-[#4F46E5] transition-colors flex items-center gap-2 mx-auto"
+                  >
+                    <Video className="w-5 h-5" />
+                    Start Interview
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
             {/* Interview Scheduling UI (for hr_t3) - Simplified */}
             {isInterviewScheduling && (
               <motion.div
@@ -861,28 +889,38 @@ HR Manager`;
                 </div>
               )}
 
-              {/* Submit Button */}
-              <button
-                onClick={handleSubmit}
-                disabled={
-                  isSubmitting ||
-                  (isResumeScreening
-                    ? selectedResumes.length !== 3
-                    : isInterviewScheduling
-                    ? scheduledInterviews.length < 1 || scheduledInterviews.filter(i => i.emailSent).length < 1
-                    : !uploadedFileUrl && !textInput.trim())
-                }
-                className="w-full px-4 py-3 bg-[#6366F1] text-white rounded-[6px] font-medium text-[15px] hover:bg-[#4F46E5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  'Submit Task'
-                )}
-              </button>
+              {/* Submit Button - Hidden for hr_t4 */}
+              {!isMockHRCall && (
+                <button
+                  onClick={handleSubmit}
+                  disabled={
+                    isSubmitting ||
+                    (isResumeScreening
+                      ? selectedResumes.length !== 3
+                      : isInterviewScheduling
+                      ? scheduledInterviews.length < 1 || scheduledInterviews.filter(i => i.emailSent).length < 1
+                      : !uploadedFileUrl && !textInput.trim())
+                  }
+                  className="w-full px-4 py-3 bg-[#6366F1] text-white rounded-[6px] font-medium text-[15px] hover:bg-[#4F46E5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Task'
+                  )}
+                </button>
+              )}
+              
+              {isMockHRCall && !submissionResponse && (
+                <div className="text-center py-4">
+                  <p className="text-[14px] text-[#787878] mb-2">
+                    Start the interview to automatically submit your transcript for evaluation.
+                  </p>
+                </div>
+              )}
             </motion.div>
 
             {/* Submission Response */}
