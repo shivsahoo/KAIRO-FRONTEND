@@ -3,7 +3,7 @@ import type { Message, Evaluation, ContextInfo } from '../types';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 // Get auth token from localStorage or cookie
-function getAuthToken(): string | null {
+export function getAuthToken(): string | null {
   return localStorage.getItem('authToken');
 }
 
@@ -555,5 +555,212 @@ export async function getInbox(folder: string = 'inbox', taskId?: string): Promi
   if (taskId) params.append('taskId', taskId);
   const query = params.toString() ? `?${params.toString()}` : '';
   return apiCall(`/interview/inbox${query}`);
+}
+
+// ==================== MOCK HR INTERVIEW APIs (Task 4) ====================
+
+/**
+ * Get LiveKit connection details (matching agent-starter pattern)
+ * Returns: { serverUrl, roomName, participantName, participantToken }
+ */
+export async function getConnectionDetails(agentName?: string): Promise<{
+  serverUrl: string;
+  roomName: string;
+  participantName: string;
+  participantToken: string;
+}> {
+  const response = await fetch(`${API_BASE_URL}/mock-interview/connection-details`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      room_config: agentName
+        ? {
+            agents: [{ agent_name: agentName }],
+          }
+        : undefined,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to get connection details' }));
+    throw new Error(error.message || 'Failed to get connection details');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get LiveKit access token for video room (legacy - kept for backward compatibility)
+ */
+export async function getLiveKitToken(roomName: string, participantName: string): Promise<{
+  token: string;
+  roomName: string;
+  participantName: string;
+}> {
+  const response = await fetch(`${API_BASE_URL}/mock-interview/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roomName, participantName }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to get token' }));
+    throw new Error(error.message || 'Failed to get token');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get available AI candidate personas
+ */
+export async function getPersonas(): Promise<Array<{
+  key: string;
+  name: string;
+  role: string;
+  experience: string;
+  description: string;
+  characteristics: string[];
+}>> {
+  const response = await fetch(`${API_BASE_URL}/mock-interview/personas`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch personas');
+  }
+
+  return response.json();
+}
+
+/**
+ * Start mock interview session
+ */
+export async function startMockInterview(roomName: string, personaKey?: string): Promise<{
+  success: boolean;
+  room: string;
+  persona: {
+    key: string;
+    name: string;
+    role: string;
+    experience: string;
+  };
+}> {
+  const response = await fetch(`${API_BASE_URL}/mock-interview/interview/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roomName, personaKey }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to start interview' }));
+    throw new Error(error.message || 'Failed to start interview');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get interview status and transcript
+ */
+export async function getMockInterview(roomName: string): Promise<{
+  transcript: Array<{
+    speaker: 'HR' | 'Candidate';
+    text: string;
+    timestamp: string;
+  }>;
+  persona: any;
+  startedAt: string;
+}> {
+  const response = await fetch(`${API_BASE_URL}/mock-interview/interview/${roomName}`);
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to get interview' }));
+    throw new Error(error.message || 'Failed to get interview');
+  }
+
+  return response.json();
+}
+
+/**
+ * Send text question to AI candidate
+ */
+export async function askMockInterviewQuestion(roomName: string, question: string): Promise<{
+  response: string;
+  audioId: string;
+  transcript: Array<any>;
+}> {
+  const response = await fetch(`${API_BASE_URL}/mock-interview/interview/${roomName}/ask`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to send question' }));
+    throw new Error(error.message || 'Failed to send question');
+  }
+
+  return response.json();
+}
+
+/**
+ * Process audio chunk (voice mode)
+ */
+export async function processMockInterviewAudio(roomName: string, audioBlob: Blob): Promise<{
+  transcript: string;
+  response: string;
+  audioId: string;
+}> {
+  const formData = new FormData();
+  formData.append('audio', audioBlob, 'audio.webm');
+
+  const response = await fetch(`${API_BASE_URL}/mock-interview/interview/${roomName}/audio`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to process audio' }));
+    throw new Error(error.message || 'Failed to process audio');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get audio response URL
+ */
+export function getMockInterviewAudioUrl(roomName: string, audioId: string): string {
+  return `${API_BASE_URL}/mock-interview/interview/${roomName}/audio/${audioId}`;
+}
+
+/**
+ * End mock interview and get evaluation
+ */
+export async function endMockInterview(roomName: string): Promise<{
+  success: boolean;
+  interview: {
+    roomName: string;
+    transcript: Array<any>;
+    evaluation: {
+      score: number;
+      strengths: string[];
+      weaknesses: string[];
+      suggestions: string[];
+      keyMoments: string[];
+    };
+    startedAt: string;
+    endedAt: string;
+  };
+}> {
+  const response = await fetch(`${API_BASE_URL}/mock-interview/interview/${roomName}/end`, {
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to end interview' }));
+    throw new Error(error.message || 'Failed to end interview');
+  }
+
+  return response.json();
 }
 

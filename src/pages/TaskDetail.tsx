@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Upload, FileText, CheckCircle2, XCircle, Loader2, User, Mail, Phone, Briefcase, GraduationCap, Calendar, Clock, Video, MapPin, Send, Plus, Copy, Check } from 'lucide-react';
 import { useSimulationStore } from '../store/simulationStore';
 import { uploadFile, submitTask, getCurrentTask, getCandidates, getAvailableTimeSlots, scheduleInterview, sendInterviewEmail, getInterviews } from '../utils/api';
+import MockInterviewPanel from '../components/MockInterview/MockInterviewPanel_Working';
 
 interface Resume {
   id: string;
@@ -65,8 +66,12 @@ export default function TaskDetail() {
   const [emailSubjects, setEmailSubjects] = useState<Record<string, string>>({}); // Email subjects
   const [emailBodies, setEmailBodies] = useState<Record<string, string>>({}); // Email bodies
 
+  // Mock interview state (for hr_t4)
+  const [mockInterviewEvaluation, setMockInterviewEvaluation] = useState<any>(null);
+
   const isResumeScreening = taskId === 'hr_t2';
   const isInterviewScheduling = taskId === 'hr_t3';
+  const isMockInterview = taskId === 'hr_t4';
 
   useEffect(() => {
     const loadTask = async () => {
@@ -370,6 +375,12 @@ HR Manager`;
         setError(`Please send emails for all scheduled interviews. ${interviewsWithoutEmails.length} interview(s) still need emails.`);
         return;
       }
+    } else if (isMockInterview) {
+      // Validate mock interview submission
+      if (!mockInterviewEvaluation) {
+        setError('Please complete the mock interview first');
+        return;
+      }
     } else {
       // Validate file upload submission
       if (!uploadedFileUrl && !textInput.trim()) {
@@ -408,6 +419,10 @@ HR Manager`;
           }
         });
         submissionData.emailIds = allEmailIds;
+      } else if (isMockInterview) {
+        // Prepare mock interview data
+        submissionData.interviewEvaluation = mockInterviewEvaluation;
+        submissionData.text = `Mock HR Interview completed. Score: ${mockInterviewEvaluation.score}/10`;
       } else {
         // File upload task
         submissionData.files = uploadedFileUrl ? [uploadedFileUrl] : [];
@@ -686,6 +701,23 @@ HR Manager`;
                     );
                   })}
                 </div>
+              </motion.div>
+            )}
+
+            {/* Mock Interview UI (for hr_t4) */}
+            {isMockInterview && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="mb-6"
+              >
+                <MockInterviewPanel
+                  taskId={taskId || 'hr_t4'}
+                  onComplete={(evaluation) => {
+                    setMockInterviewEvaluation(evaluation);
+                  }}
+                />
               </motion.div>
             )}
 
@@ -1072,30 +1104,32 @@ HR Manager`;
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: isResumeScreening ? 0.3 : isInterviewScheduling ? 0.4 : 0.1 }}
+              transition={{ delay: isResumeScreening ? 0.3 : isInterviewScheduling ? 0.4 : isMockInterview ? 0.2 : 0.1 }}
               className="bg-white rounded-[8px] p-6 border border-[#E5E5E5] mb-6"
             >
               <h3 className="text-[17px] font-semibold text-[#0D0D0D] mb-4">Submit Your Work</h3>
 
               {/* Text Input for Justification */}
-              <div className="mb-6">
-                <label className="block text-[14px] font-medium text-[#0D0D0D] mb-2">
-                  {isResumeScreening ? 'Justification for Selection' : 'Additional Notes'} (Optional)
-                </label>
-                <textarea
-                  value={textInput}
-                  onChange={(e) => setTextInput(e.target.value)}
-                  placeholder={
-                    isResumeScreening
-                      ? 'Explain your reasoning for selecting these 3 candidates...'
-                      : 'Add any additional notes or context about your submission...'
-                  }
-                  className="w-full min-h-[100px] px-4 py-3 border border-[#E5E5E5] rounded-[6px] text-[14px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent resize-none"
-                />
-              </div>
+              {!isMockInterview && (
+                <div className="mb-6">
+                  <label className="block text-[14px] font-medium text-[#0D0D0D] mb-2">
+                    {isResumeScreening ? 'Justification for Selection' : 'Additional Notes'} (Optional)
+                  </label>
+                  <textarea
+                    value={textInput}
+                    onChange={(e) => setTextInput(e.target.value)}
+                    placeholder={
+                      isResumeScreening
+                        ? 'Explain your reasoning for selecting these 3 candidates...'
+                        : 'Add any additional notes or context about your submission...'
+                    }
+                    className="w-full min-h-[100px] px-4 py-3 border border-[#E5E5E5] rounded-[6px] text-[14px] text-[#0D0D0D] focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent resize-none"
+                  />
+                </div>
+              )}
 
-              {/* File Upload (for non-resume screening tasks) */}
-              {!isResumeScreening && (
+              {/* File Upload (for non-resume screening and non-mock interview tasks) */}
+              {!isResumeScreening && !isMockInterview && (
                 <div className="mb-6">
                   <label className="block text-[14px] font-medium text-[#0D0D0D] mb-2">
                     Upload Job Description File
@@ -1155,6 +1189,21 @@ HR Manager`;
               )}
 
               {/* Submit Button */}
+              {isMockInterview && mockInterviewEvaluation && (
+                <div className="mb-4 p-4 bg-[#D1FAE5] border border-[#059669] rounded-[6px]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2 className="w-5 h-5 text-[#059669]" />
+                    <span className="text-[15px] font-semibold text-[#0D0D0D]">Interview Completed!</span>
+                  </div>
+                  <p className="text-[14px] text-[#0D0D0D]">
+                    Your interview score: <span className="font-bold text-[#6366F1]">{mockInterviewEvaluation.score}/10</span>
+                  </p>
+                  <p className="text-[13px] text-[#787878] mt-1">
+                    Click Submit to proceed to the next task.
+                  </p>
+                </div>
+              )}
+
               <button
                 onClick={handleSubmit}
                 disabled={
@@ -1163,6 +1212,8 @@ HR Manager`;
                     ? selectedResumes.length !== 3
                     : isInterviewScheduling
                     ? scheduledInterviews.length < 3 || scheduledInterviews.some(i => !i.emailSent)
+                    : isMockInterview
+                    ? !mockInterviewEvaluation
                     : !uploadedFileUrl && !textInput.trim())
                 }
                 className="w-full px-4 py-3 bg-[#6366F1] text-white rounded-[6px] font-medium text-[15px] hover:bg-[#4F46E5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
